@@ -101,9 +101,6 @@ namespace TicTacToe
             public MoveValuePair(Move move, int value) { this.move = move; this.value = value; }
             public MoveValuePair(int value) { this.move = new Move(); this.value = value; }
 
-            public static MoveValuePair Min(in MoveValuePair a, in MoveValuePair b) => a.value < b.value ? a : b;
-            public static MoveValuePair Max(in MoveValuePair a, in MoveValuePair b) => a.value > b.value ? a : b;
-
             public static MoveValuePair operator-(in MoveValuePair rhs) => new MoveValuePair(rhs.move, -rhs.value);
         }
 
@@ -125,25 +122,19 @@ namespace TicTacToe
             {
                 mainBoard.MakeMove(move);
 
-                MoveValuePair currentValue = MiniMax(depth - 1, !isMaximizingPlayer, move);
+                int currentHeuristic = MiniMax(depth - 1, !isMaximizingPlayer, move).value;
 
                 mainBoard.UndoMove(move);
 
                 if (isMaximizingPlayer)
                 {
-                    if (currentValue.value > bestValue.value)
-                    {
-                        bestValue = currentValue;
-                        bestValue.move = move;
-                    }
+                    if (currentHeuristic > bestValue.value)
+                        bestValue = new MoveValuePair(move, currentHeuristic);
                 }
                 else
                 {
-                    if (currentValue.value < bestValue.value)
-                    {
-                        bestValue = currentValue;
-                        bestValue.move = move;
-                    }
+                    if (currentHeuristic < bestValue.value)
+                        bestValue = new MoveValuePair(move, currentHeuristic);
                 }
             }
 
@@ -168,29 +159,23 @@ namespace TicTacToe
             {
                 mainBoard.MakeMove(move);
 
-                MoveValuePair currentValue = MiniMaxAB(depth - 1, !isMaximizingPlayer, alpha, beta, move);
+                int currentHeuristic = MiniMaxAB(depth - 1, !isMaximizingPlayer, alpha, beta, move).value;
 
                 mainBoard.UndoMove(move);
 
                 if (isMaximizingPlayer)
                 {
-                    if (currentValue.value > bestValue.value)
-                    {
-                        bestValue = currentValue;
-                        bestValue.move = move;
-                    }
+                    if (currentHeuristic > bestValue.value)
+                        bestValue = new MoveValuePair(move, currentHeuristic);
 
-                    alpha = Math.Max(alpha, currentValue.value);
+                    alpha = Math.Max(alpha, currentHeuristic);
                 }
                 else
                 {
-                    if (currentValue.value < bestValue.value)
-                    {
-                        bestValue = currentValue;
-                        bestValue.move = move;
-                    }
+                    if (currentHeuristic < bestValue.value)
+                        bestValue = new MoveValuePair(move, currentHeuristic);
 
-                    beta = Math.Min(beta, currentValue.value);
+                    beta = Math.Min(beta, currentHeuristic);
                 }
 
                 if (beta <= alpha)
@@ -215,15 +200,12 @@ namespace TicTacToe
             {
                 mainBoard.MakeMove(move);
 
-                MoveValuePair currentValue = -NegaMax(depth - 1, move);
+                int currentHeuristic = -NegaMax(depth - 1, move).value;
 
                 mainBoard.UndoMove(move);
 
-                if (currentValue.value > bestValue.value)
-                {
-                    bestValue = currentValue;
-                    bestValue.move = move;
-                }
+                if (currentHeuristic > bestValue.value)
+                    bestValue = new MoveValuePair(move, currentHeuristic);
             }
 
             return bestValue;
@@ -244,17 +226,14 @@ namespace TicTacToe
             {
                 mainBoard.MakeMove(move);
 
-                MoveValuePair currentValue = -NegaMaxAB(depth - 1, -beta, -alpha, move);
+                int currentHeuristic = -NegaMaxAB(depth - 1, -beta, -alpha, move).value;
 
                 mainBoard.UndoMove(move);
 
-                if (currentValue.value > bestValue.value)
-                {
-                    bestValue = currentValue;
-                    bestValue.move = move;
-                }
+                if (currentHeuristic > bestValue.value)
+                    bestValue = new MoveValuePair(move, currentHeuristic);
 
-                alpha = Math.Max(alpha, currentValue.value);
+                alpha = Math.Max(alpha, currentHeuristic);
 
                 if (alpha >= beta)
                     break;
@@ -270,8 +249,8 @@ namespace TicTacToe
 
             //MoveValuePair result = MiniMax(10, true);
             //MoveValuePair result = NegaMax(10);
-            MoveValuePair result = MiniMaxAB(10, true);
-            //MoveValuePair result = NegaMaxAB(10, -1000, 1000);
+            //MoveValuePair result = MiniMaxAB(10, true);
+            MoveValuePair result = NegaMaxAB(10, -1000, 1000);
 
             mainBoard.MakeMove(result.move);
 
