@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace TicTacToe
 {
+
+
 	public struct Move
 	{
 		public int Line;
@@ -227,13 +229,49 @@ namespace TicTacToe
             return bestValue;
         }
 
+        MoveValuePair NegaMaxAB(int depth, int alpha, int beta, Move node = new Move())
+        {
+            if (depth == 0 || mainBoard.IsGameOver())
+                return new MoveValuePair(node, mainBoard.Evaluate());
+
+            iterationNumber++;
+
+            MoveValuePair bestValue = new MoveValuePair(node, int.MinValue);
+
+            IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
+
+            foreach (Move move in moves)
+            {
+                mainBoard.MakeMove(move);
+
+                MoveValuePair currentValue = -NegaMaxAB(depth - 1, -beta, -alpha, move);
+
+                mainBoard.UndoMove(move);
+
+                if (currentValue.value > bestValue.value)
+                {
+                    bestValue = currentValue;
+                    bestValue.move = move;
+                }
+
+                alpha = Math.Max(alpha, currentValue.value);
+
+                if (alpha >= beta)
+                    break;
+            }
+
+            return bestValue;
+        }
+
         // ***** AI : random move
         void ComputeAIMove()
         {
             iterationNumber = 0;
-            MoveValuePair result = MiniMaxAB(10, true);
+
+            //MoveValuePair result = MiniMax(10, true);
             //MoveValuePair result = NegaMax(10);
-            //MoveValuePair result = MiniMaxAB(10, true);
+            MoveValuePair result = MiniMaxAB(10, true);
+            //MoveValuePair result = NegaMaxAB(10, -1000, 1000);
 
             mainBoard.MakeMove(result.move);
 
