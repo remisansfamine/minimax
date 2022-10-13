@@ -22,6 +22,8 @@ namespace TicTacToe
         public bool IsGameOver { get { return isGameOver; } }
         Board mainBoard = new Board();
 
+        int iterationNumber = 0;
+
         public GameMgr()
         {
             mainBoard.Init();
@@ -51,6 +53,8 @@ namespace TicTacToe
         public bool Update()
         {
             mainBoard.Draw();
+
+            Console.WriteLine($"Iteration count: {iterationNumber}");
 
             Move crtMove = new Move();
             if (IsPlayerTurn())
@@ -85,14 +89,154 @@ namespace TicTacToe
             }
             return true;
         }
-        
+
+        private class MoveValuePair
+        {
+            public Move move = new Move();
+            public int value = int.MinValue;
+
+            public MoveValuePair() { }
+            public MoveValuePair(Move move, int value) { this.move = move; this.value = value; }
+            public MoveValuePair(int value) { this.move = new Move(); this.value = value; }
+
+            public static MoveValuePair Min(in MoveValuePair a, in MoveValuePair b) => a.value < b.value ? a : b;
+            public static MoveValuePair Max(in MoveValuePair a, in MoveValuePair b) => a.value > b.value ? a : b;
+
+            public static MoveValuePair operator-(in MoveValuePair rhs) => new MoveValuePair(rhs.move, -rhs.value);
+        }
+
+        MoveValuePair MiniMax(int depth, bool isMaximizingPlayer, Move node = new Move())
+        {
+            if (depth == 0 || mainBoard.IsGameOver())
+            {
+                int heuristic = mainBoard.Evaluate(Player.Circle);
+                return new MoveValuePair(node, heuristic);
+            }
+
+            iterationNumber++;
+
+            MoveValuePair bestValue = new MoveValuePair(node, isMaximizingPlayer ? int.MinValue : int.MaxValue);
+
+            IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
+
+            foreach (Move move in moves)
+            {
+                mainBoard.MakeMove(move);
+
+                MoveValuePair currentValue = MiniMax(depth - 1, !isMaximizingPlayer, move);
+
+                mainBoard.UndoMove(move);
+
+                if (isMaximizingPlayer)
+                {
+                    if (currentValue.value > bestValue.value)
+                    {
+                        bestValue = currentValue;
+                        bestValue.move = move;
+                    }
+                }
+                else
+                {
+                    if (currentValue.value < bestValue.value)
+                    {
+                        bestValue = currentValue;
+                        bestValue.move = move;
+                    }
+                }
+            }
+
+            return bestValue;
+        }
+
+        MoveValuePair MiniMaxAB(int depth, bool isMaximizingPlayer, int alpha = int.MinValue, int beta = int.MaxValue, Move node = new Move())
+        {
+            if (depth == 0 || mainBoard.IsGameOver())
+            {
+                int heuristic = mainBoard.Evaluate(Player.Circle);
+                return new MoveValuePair(node, heuristic);
+            }
+
+            iterationNumber++;
+
+            MoveValuePair bestValue = new MoveValuePair(node, isMaximizingPlayer ? int.MinValue : int.MaxValue);
+
+            IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
+
+            foreach (Move move in moves)
+            {
+                mainBoard.MakeMove(move);
+
+                MoveValuePair currentValue = MiniMaxAB(depth - 1, !isMaximizingPlayer, alpha, beta, move);
+
+                mainBoard.UndoMove(move);
+
+                if (isMaximizingPlayer)
+                {
+                    if (currentValue.value > bestValue.value)
+                    {
+                        bestValue = currentValue;
+                        bestValue.move = move;
+                    }
+
+                    alpha = Math.Max(alpha, currentValue.value);
+                }
+                else
+                {
+                    if (currentValue.value < bestValue.value)
+                    {
+                        bestValue = currentValue;
+                        bestValue.move = move;
+                    }
+
+                    beta = Math.Min(beta, currentValue.value);
+                }
+
+                if (beta <= alpha)
+                    break;
+            }
+
+            return bestValue;
+        }
+
+        MoveValuePair NegaMax(int depth, Move node = new Move())
+        {
+            if (depth == 0 || mainBoard.IsGameOver())
+                return new MoveValuePair(node, mainBoard.Evaluate());
+
+            iterationNumber++;
+
+            MoveValuePair bestValue = new MoveValuePair(node, int.MinValue);
+
+            IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
+
+            foreach (Move move in moves)
+            {
+                mainBoard.MakeMove(move);
+
+                MoveValuePair currentValue = -NegaMax(depth - 1, move);
+
+                mainBoard.UndoMove(move);
+
+                if (currentValue.value > bestValue.value)
+                {
+                    bestValue = currentValue;
+                    bestValue.move = move;
+                }
+            }
+
+            return bestValue;
+        }
+
         // ***** AI : random move
         void ComputeAIMove()
         {
-            Random rand = new Random();
-            List<Move> moves = mainBoard.GetAvailableMoves();
-            Move randMove = moves[rand.Next(moves.Count - 1)];
-            mainBoard.MakeMove(randMove);
+            iterationNumber = 0;
+            MoveValuePair result = MiniMaxAB(10, true);
+            //MoveValuePair result = NegaMax(10);
+            //MoveValuePair result = MiniMaxAB(10, true);
+
+            mainBoard.MakeMove(result.move);
+
         }
     }
 }
