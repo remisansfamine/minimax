@@ -3,7 +3,13 @@ using System.Collections.Generic;
 
 namespace TicTacToe
 {
-
+    public enum EAlgorithm
+    {
+        MINIMAX,
+        NEGAMAX,
+        MINIMAXAB,
+        NEGAMAXAB,
+    }
 
 	public struct Move
 	{
@@ -20,6 +26,8 @@ namespace TicTacToe
 
     public class GameMgr
     {
+        EAlgorithm algorithm = EAlgorithm.MINIMAX;
+
         bool isGameOver = false;
         public bool IsGameOver { get { return isGameOver; } }
         Board mainBoard = new Board();
@@ -30,11 +38,29 @@ namespace TicTacToe
         {
             mainBoard.Init();
             mainBoard.CurrentPlayer = Player.Cross;
+
+            int algoType = GetAlgorithmType();
+
+            algorithm = (EAlgorithm)algoType;
         }
 
         bool IsPlayerTurn()
         {
             return mainBoard.CurrentPlayer == Player.Cross;
+        }
+
+        private int GetAlgorithmType()
+        {
+            Console.Write("Which algorithm do you want to use ?\n1. MiniMax\n2. NegaMax\n3. MiniMaxAB\n4. NegaMaxAB");
+            ConsoleKeyInfo inputKey;
+            int resNum = -1;
+            while (resNum < 0 || resNum > 3)
+            {
+                inputKey = Console.ReadKey();
+                if (int.TryParse(inputKey.KeyChar.ToString(), out int inputNum))
+                    resNum = inputNum - 1;
+            }
+            return resNum;
         }
 
         private int GetPlayerInput(bool isColumn)
@@ -56,7 +82,8 @@ namespace TicTacToe
         {
             mainBoard.Draw();
 
-            Console.WriteLine($"Iteration count: {iterationNumber}");
+            Console.WriteLine("Current algorithm: {0}", algorithm.ToString());
+            Console.WriteLine("Iteration count: {0}", iterationNumber);
 
             Move crtMove = new Move();
             if (IsPlayerTurn())
@@ -247,13 +274,28 @@ namespace TicTacToe
         {
             iterationNumber = 0;
 
-            //MoveValuePair result = MiniMax(10, true);
-            //MoveValuePair result = NegaMax(10);
-            //MoveValuePair result = MiniMaxAB(10, true);
-            MoveValuePair result = NegaMaxAB(10, -1000, 1000);
+            MoveValuePair result;
+            switch (algorithm)
+            {
+                case EAlgorithm.MINIMAX:
+                default:
+                    result = MiniMax(10, true);
+                    break;
+
+                case EAlgorithm.MINIMAXAB:
+                    result = MiniMaxAB(10, true);
+                    break;
+
+                case EAlgorithm.NEGAMAX:
+                    result = NegaMax(10);
+                    break;
+
+                case EAlgorithm.NEGAMAXAB:
+                    result = NegaMaxAB(10, -1000, 1000);
+                    break;
+            }
 
             mainBoard.MakeMove(result.move);
-
         }
     }
 }
