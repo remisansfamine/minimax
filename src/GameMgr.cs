@@ -333,6 +333,7 @@ namespace TicTacToe
 
             if (result.move.HasValue)
                 mainBoard.MakeMove(result.move.Value);
+            else
                 Console.Write("Error no valid move found, the depth maybe too short.");
         }
     }
