@@ -123,17 +123,26 @@ namespace TicTacToe
 
         private struct MoveValuePair
         {
-            public Move move;
+            public Move? move;
             public int value;
 
-            public MoveValuePair(Move move, int value) { this.move = move; this.value = value; }
-            public MoveValuePair(int value) { this.move = new Move(); this.value = value; }
+            public MoveValuePair(Move move, int value)
+            {
+                this.move = move;
+                this.value = value;
+            }
+
+            public MoveValuePair(int value)
+            {
+                this.move = null;
+                this.value = value;
+            }
         }
 
-        MoveValuePair MiniMax(int depth, bool isMaximizingPlayer, Move node = new Move())
+        MoveValuePair MiniMax(int depth, bool isMaximizingPlayer)
         {
             // Check if this is the final node, return only the heuristic 
-            if (depth == 0 || mainBoard.IsGameOver())
+            if (depth <= 0 || mainBoard.IsGameOver())
             {
                 int heuristic = mainBoard.Evaluate(Player.Circle);
                 return new MoveValuePair(heuristic);
@@ -141,7 +150,7 @@ namespace TicTacToe
 
             iterationNumber++;
 
-            MoveValuePair bestValue = new MoveValuePair(node, isMaximizingPlayer ? int.MinValue : int.MaxValue);
+            MoveValuePair bestValue = new MoveValuePair(isMaximizingPlayer ? int.MinValue : int.MaxValue);
 
             IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
 
@@ -152,7 +161,7 @@ namespace TicTacToe
                     // Make a move and undo it in the same board to avoid useless cloning
                     mainBoard.MakeMove(move);
 
-                    currentHeuristic = MiniMax(depth - 1, !isMaximizingPlayer, move).value;
+                    currentHeuristic = MiniMax(depth - 1, !isMaximizingPlayer).value;
 
                     mainBoard.UndoMove(move);
                 }
@@ -172,10 +181,10 @@ namespace TicTacToe
             return bestValue;
         }
 
-        MoveValuePair MiniMaxAB(int depth, bool isMaximizingPlayer, int alpha = int.MinValue, int beta = int.MaxValue, Move node = new Move())
+        MoveValuePair MiniMaxAB(int depth, bool isMaximizingPlayer, int alpha = int.MinValue, int beta = int.MaxValue)
         {
             // Check if this is the final node, return only the heuristic 
-            if (depth == 0 || mainBoard.IsGameOver())
+            if (depth <= 0 || mainBoard.IsGameOver())
             {
                 int heuristic = mainBoard.Evaluate(Player.Circle);
                 return new MoveValuePair(heuristic);
@@ -183,7 +192,7 @@ namespace TicTacToe
 
             iterationNumber++;
 
-            MoveValuePair bestValue = new MoveValuePair(node, isMaximizingPlayer ? int.MinValue : int.MaxValue);
+            MoveValuePair bestValue = new MoveValuePair(isMaximizingPlayer ? int.MinValue : int.MaxValue);
 
             IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
 
@@ -194,7 +203,7 @@ namespace TicTacToe
                     // Make a move and undo it in the same board to avoid useless cloning
                     mainBoard.MakeMove(move);
 
-                    currentHeuristic = MiniMaxAB(depth - 1, !isMaximizingPlayer, alpha, beta, move).value;
+                    currentHeuristic = MiniMaxAB(depth - 1, !isMaximizingPlayer, alpha, beta).value;
 
                     mainBoard.UndoMove(move);
                 }
@@ -222,10 +231,10 @@ namespace TicTacToe
             return bestValue;
         }
 
-        MoveValuePair NegaMax(int depth, Move node = new Move())
+        MoveValuePair NegaMax(int depth)
         {
             // Check if this is the final node, return only the heuristic 
-            if (depth == 0 || mainBoard.IsGameOver())
+            if (depth <= 0 || mainBoard.IsGameOver())
             {
                 int heuristic = mainBoard.Evaluate();
                 return new MoveValuePair(heuristic);
@@ -233,7 +242,7 @@ namespace TicTacToe
 
             iterationNumber++;
 
-            MoveValuePair bestValue = new MoveValuePair(node, int.MinValue);
+            MoveValuePair bestValue = new MoveValuePair(int.MinValue);
 
             IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
 
@@ -244,7 +253,7 @@ namespace TicTacToe
                     // Make a move and undo it in the same board to avoid useless cloning
                     mainBoard.MakeMove(move);
 
-                    currentHeuristic = -NegaMax(depth - 1, move).value;
+                    currentHeuristic = -NegaMax(depth - 1).value;
 
                     mainBoard.UndoMove(move);
                 }
@@ -256,10 +265,10 @@ namespace TicTacToe
             return bestValue;
         }
 
-        MoveValuePair NegaMaxAB(int depth, int alpha, int beta, Move node = new Move())
+        MoveValuePair NegaMaxAB(int depth, int alpha, int beta)
         {
             // Check if this is the final node, return only the heuristic 
-            if (depth == 0 || mainBoard.IsGameOver())
+            if (depth <= 0 || mainBoard.IsGameOver())
             {
                 int heuristic = mainBoard.Evaluate();
                 return new MoveValuePair(heuristic);
@@ -267,7 +276,7 @@ namespace TicTacToe
 
             iterationNumber++;
 
-            MoveValuePair bestValue = new MoveValuePair(node, int.MinValue);
+            MoveValuePair bestValue = new MoveValuePair(int.MinValue);
 
             IEnumerable<Move> moves = mainBoard.GetAvailableMoves();
 
@@ -278,7 +287,7 @@ namespace TicTacToe
                     // Make a move and undo it in the same board to avoid useless cloning
                     mainBoard.MakeMove(move);
 
-                    currentHeuristic = -NegaMaxAB(depth - 1, -beta, -alpha, move).value;
+                    currentHeuristic = -NegaMaxAB(depth - 1, -beta, -alpha).value;
 
                     mainBoard.UndoMove(move);
                 }
@@ -322,7 +331,9 @@ namespace TicTacToe
                     break;
             }
 
-            mainBoard.MakeMove(result.move);
+            if (result.move.HasValue)
+                mainBoard.MakeMove(result.move.Value);
+                Console.Write("Error no valid move found, the depth maybe too short.");
         }
     }
 }
